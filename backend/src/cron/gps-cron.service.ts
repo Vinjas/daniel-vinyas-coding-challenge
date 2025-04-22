@@ -62,9 +62,23 @@ export class GpsCronService {
 
   // Helper function to save parsed GPS data to the database
   private async saveGpsDataToDatabase(gpsData: any[], filename: string) {
+    // I get the sessionId from the filename using a regular expression
+    // If there is no match I use the csv filename as sessionId
+    const sessionIdMatch = filename.match(/session_(\d+)\.csv/);
+    const sessionId = sessionIdMatch ? sessionIdMatch[1] : path.basename(filename, '.csv');
+
     for (const data of gpsData) {
-      // 6. Place your logic here for processing the parsed data
-      // For example, you can map CSV rows to the GpsPosition entity
+      const timestamp = new Date(data.timestamp);
+
+      // I map the CSV data into it's proper entity before saving to the database
+      const gpsPosition = await this.gpsService.createGpsPosition({
+        latitude: parseFloat(data.latitude),
+        longitude: parseFloat(data.longitude),
+        timestamp,
+        sessionId,
+      });
+
+      await this.gpsService.saveGpsPosition(gpsPosition)
     }
   }
 
