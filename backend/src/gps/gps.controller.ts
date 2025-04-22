@@ -1,6 +1,7 @@
 import { Controller, Get, Param, NotFoundException } from "@nestjs/common";
 import { GpsService } from "./gps.service";
 import { GpsPosition } from "../database/gps-position.entity";
+import { GpsSessionDto } from "./dto/gps-session.dto";
 
 @Controller("gps-position")
 export class GpsController {
@@ -12,19 +13,25 @@ export class GpsController {
     return await this.gpsService.getAllGpsPositions();
   }
 
-  // GET /api/gps-positions/:sessionId - Fetch specific GPS positions by session ID
+  /**
+   * API endpoint to retrieve detailed information about a GPS session.
+   *
+   * @param sessionId The ID of the session.
+   * @returns A DTO containing session metadata and its list of GPS positions.
+   * @throws NotFoundException if the session does not exist or contains no data.
+   */
   @Get(":sessionId")
   async getGpsPositionsById(
     @Param("sessionId") sessionId: string,
-  ): Promise<GpsPosition[]> {
-    const positions = await this.gpsService.getGpsPositionsById(sessionId);
+  ): Promise<GpsSessionDto> {
+    const session = await this.gpsService.getGpsSessionData(sessionId);
 
-    if (!positions) {
+    if (!session || !session?.points) {
       throw new NotFoundException(
         `GPS positions with Session ID ${sessionId} not found`,
       );
     }
 
-    return positions;
+    return session;
   }
 }
