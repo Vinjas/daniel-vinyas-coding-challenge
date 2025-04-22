@@ -1,8 +1,8 @@
 import React from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useFetch } from '../services/use-fetch'
 import { Map } from '../components/Map'
-import { GpsSession, GpsSessionPositions } from '../services/gps-session'
+import { GpsSession } from '../services/gps-session'
 import { SessionDetailsPanel } from '../components/SessionDetailsPanel'
 import { Button } from '../components/Button'
 
@@ -26,15 +26,23 @@ export function SessionDetail() {
     <div className="session-detail-wrapper">
       <h1 className="session-detail-header">Session {sessionId}</h1>
 
-      <Map gpsPositions={data.points} sessionId={sessionId!} />
+      {Boolean(error) && <div>Error: {(error as Error).message}</div>}
 
-      <br />
+      {loading && <div>Loading session...</div>}
 
-      <SessionDetailsPanel session={data} />
+      {Boolean(data) && (
+        <>
+          <Map gpsPositions={data.points} sessionId={sessionId!} />
 
-      <br />
+          <br />
 
-      <Button onClick={handleOnClick}>← Back to all sessions</Button>
+          <SessionDetailsPanel session={data} />
+
+          <br />
+
+          <Button onClick={handleOnClick}>← Back to all sessions</Button>
+        </>
+      )}
     </div>
   )
 }

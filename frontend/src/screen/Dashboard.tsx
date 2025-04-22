@@ -18,7 +18,11 @@ export default function Dashboard() {
   return (
     <div className="dashboard-wrapper">
       <h1 className="dashboard-header">GPS Sessions</h1>
-      <MapGrid groupedData={groupedData} />
+      {Boolean(error) && <div>Error: {(error as Error).message}</div>}
+
+      {loading && <div>Loading sessions...</div>}
+
+      {Boolean(data) && <MapGrid groupedData={groupedData} />}
     </div>
   )
 }

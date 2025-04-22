@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react'
-import { Map as Mapgl, Source, Layer, Marker, useMap } from 'react-map-gl'
+import React, { useCallback } from 'react'
+import { Map as Mapgl, Source, Layer } from 'react-map-gl'
 import { GpsSessionPositions } from '../services/gps-session'
 import {
   defaultInitialViewState,
