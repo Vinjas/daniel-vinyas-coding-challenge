@@ -1,0 +1,11 @@
+.sessions-details-panel-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  box-shadow: rgba(99, 99, 99, 0.2) 0 2px 8px 0;
+  margin-bottom: 1rem;
+}

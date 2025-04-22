@@ -1,39 +1,42 @@
-import React from 'react'
-import { Map as Mapgl, Source, Layer } from 'react-map-gl'
-<<<<<<< HEAD
-import { GpsSession } from '../services/gpsApi'
-=======
-import { GpsSession } from '../services/gps-session'
->>>>>>> stuff
+import React, { useCallback, useEffect } from 'react'
+import { Map as Mapgl, Source, Layer, Marker, useMap } from 'react-map-gl'
+import { GpsSessionPositions } from '../services/gps-session'
 import {
+  defaultInitialViewState,
   MAP_ACCESS_TOKEN,
   MAP_STYLE,
-  defaultInitialViewState,
 } from '../constants'
-
-// Function to convert latitude/longitude arrays into GeoJSON
-const convertToGeoJSON = (latitude: number, longitude: number) => {
-  return {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: [latitude, longitude],
-        },
-        properties: {},
-      },
-    ],
-  } as never
-}
+import { convertToGeoJSON } from '../util/convertToGeoJSON'
 
 type MapProps = {
-  session: GpsSession
+  gpsPositions: GpsSessionPositions[]
+  sessionId: string
 }
 
-export default function Map(props: MapProps) {
-  const { session } = props
+export function Map({ gpsPositions, sessionId }: MapProps) {
+  const getBounds = useCallback((): [[number, number], [number, number]] => {
+    const lons = gpsPositions.map((p) => p.longitude)
+    const lats = gpsPositions.map((p) => p.latitude)
+    const minLon = Math.min(...lons)
+    const maxLon = Math.max(...lons)
+    const minLat = Math.min(...lats)
+    const maxLat = Math.max(...lats)
+    return [
+      [minLon, minLat],
+      [maxLon, maxLat],
+    ]
+  }, [gpsPositions])
+
+  const handleMapLoad = useCallback(
+    (event: mapboxgl.MapboxEvent) => {
+      const map = event.target
+      if (gpsPositions.length > 0) {
+        const bounds = getBounds()
+        map.fitBounds(bounds, { padding: 60, duration: 1000 })
+      }
+    },
+    [getBounds, gpsPositions],
+  )
 
   return (
     <Mapgl
@@ -41,14 +44,16 @@ export default function Map(props: MapProps) {
       style={{ width: '100%', height: 300 }}
       mapStyle={MAP_STYLE}
       mapboxAccessToken={MAP_ACCESS_TOKEN}
+      onLoad={handleMapLoad}
     >
       <Source
-        id={`session-${session.id}`}
+        id={`session-${sessionId}`}
         type="geojson"
-        data={convertToGeoJSON(session.latitude, session.longitude)}
+        data={convertToGeoJSON(gpsPositions)}
       >
+        {/* Shadow Layer */}
         <Layer
-          id={`route-${session.id}`}
+          id={`route-shadow-${sessionId}`}
           type="line"
           layout={{
             'line-join': 'round',
@@ -57,6 +62,7 @@ export default function Map(props: MapProps) {
           paint={{
             'line-color': '#ff0000',
             'line-width': 4,
+            'line-opacity': 0.6,
           }}
         />
       </Source>
