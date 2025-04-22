@@ -1,34 +1,37 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { GpsController } from './gps.controller';
-import { GpsService } from './gps.service';
-import { GpsPosition } from '../database/gps-position.entity';
-import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from "@nestjs/testing";
+import { GpsController } from "./gps.controller";
+import { GpsService } from "./gps.service";
+import { NotFoundException } from "@nestjs/common";
+import { GpsPosition } from "../database/gps-position.entity";
+import { GpsSessionDto } from "./dto/gps-session.dto";
 
-describe('GpsController', () => {
+describe("GpsController", () => {
   let controller: GpsController;
-  let service: GpsService;
+  let gpsService: GpsService;
 
-  const mockGpsService = {
-    getAllGpsPositions: jest.fn(),
-    getGpsPositionsById: jest.fn(),
-  };
-
-  const mockGpsData: GpsPosition[] = [
+  const mockGpsPositions: GpsPosition[] = [
     {
       id: 1,
       latitude: 52.52,
       longitude: 13.405,
-      timestamp: new Date('2023-10-10T10:00:00Z'),
-      sessionId: '1',
-    },
-    {
-      id: 2,
-      latitude: 52.53,
-      longitude: 13.406,
-      timestamp: new Date('2023-10-10T10:05:00Z'),
-      sessionId: '2',
+      timestamp: new Date("2024-10-10T08:00:00Z"),
+      sessionId: "1",
     },
   ];
+
+  const mockSession: GpsSessionDto = {
+    sessionId: "1",
+    startTime: 1728556800000,
+    endTime: 1728557100000,
+    durationMinutes: 5,
+    distanceKm: 1.2,
+    points: mockGpsPositions,
+  };
+
+  const mockGpsService = {
+    getAllGpsPositions: jest.fn(),
+    getGpsSessionData: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,40 +45,38 @@ describe('GpsController', () => {
     }).compile();
 
     controller = module.get<GpsController>(GpsController);
-    service = module.get<GpsService>(GpsService);
+    gpsService = module.get<GpsService>(GpsService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should return all GPS positions', async () => {
-    mockGpsService.getAllGpsPositions.mockResolvedValue(mockGpsData);
+  it("should return all GPS positions", async () => {
+    mockGpsService.getAllGpsPositions.mockResolvedValue(mockGpsPositions);
 
     const result = await controller.getAllGpsPositions();
 
-    expect(result).toEqual(mockGpsData);
+    expect(result).toEqual(mockGpsPositions);
     expect(mockGpsService.getAllGpsPositions).toHaveBeenCalled();
   });
 
-  it('should return GPS positions by session ID', async () => {
-    mockGpsService.getGpsPositionsById.mockImplementation(async (sessionId: string) => {
-      const result = mockGpsData.filter(pos => pos.sessionId === sessionId);
-      return result.length > 0 ? result : null;
-    });
+  it("should return session data for a valid session ID", async () => {
+    mockGpsService.getGpsSessionData.mockResolvedValue(mockSession);
 
-    const result = await controller.getGpsPositionsById('1');
+    const result = await controller.getGpsPositionsById("1");
 
-    expect(result).toEqual([mockGpsData[0]]);
-    expect(mockGpsService.getGpsPositionsById).toHaveBeenCalledWith('1');
+    expect(result).toEqual(mockSession);
+    expect(mockGpsService.getGpsSessionData).toHaveBeenCalledWith("1");
   });
 
+  it("should throw NotFoundException if session is not found", async () => {
+    mockGpsService.getGpsSessionData.mockResolvedValue(null);
 
-  it('should throw NotFoundException if no data for session ID', async () => {
-    mockGpsService.getGpsPositionsById.mockResolvedValue(null);
-
-    await expect(controller.getGpsPositionsById('99')).rejects.toThrow(
+    await expect(controller.getGpsPositionsById("999")).rejects.toThrow(
       NotFoundException,
     );
+
+    expect(mockGpsService.getGpsSessionData).toHaveBeenCalledWith("999");
   });
 });
